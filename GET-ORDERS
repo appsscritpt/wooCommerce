@@ -1,0 +1,81 @@
+var ck= 'YOUR-CUSTOMER-key'
+var cs= 'YOUR-CUSTOMER-KEY'
+////////////////////////////////////////////////
+function fetch_orders(e) {
+
+    var options =
+        {
+            "method": "GET",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            "muteHttpExceptions": true,
+        }
+    query = '&search=' + email
+    var surl = website + "/wp-json/wc/v2/orders?consumer_key=" + ck + "&consumer_secret=" + cs + "&after=" + m + "&per_page=100" + query
+    var url = surl
+    var result = UrlFetchApp.fetch(url, options)
+    if (result.getResponseCode() == 200) {
+        var params = JSON.parse(result.getContentText())
+    } else {
+        Logger.log('Error')
+        return
+    } 
+    var arrayLength = params.length
+    if(arrayLength == 0) {
+      return
+     }
+    
+    for (var i = 0; i < arrayLength; i++) {
+        var c, d;
+        var container = '';
+        container += "First Name: " + params[i]["billing"]["first_name"] + "\n"
+        container +="Last Name: " + params[i]["billing"]["last_name"] + "\n";
+        container +="Billing Address:\n " + params[i]["billing"]["address_1"]+ " "+ 
+        params[i]["billing"]["postcode"]+ " "+ params[i]["billing"]["city"]  + "\n"
+        container +="Billing phone: " +params[i]["billing"]["phone"] + "\n"
+        container +="Billing Email: " +params[i]["billing"]["email"] + "\n"
+        container +="Shipping Address:\n" + params[i]["shipping"]["first_name"] + " "+ 
+        params[i]["shipping"]["last_name"]+ " "+ params[i]["shipping"]["address_2"]+" "+
+        params[i]["shipping"]["address_1"]+" "+params[i]["shipping"]["postcode"]+" "+
+        params[i]["shipping"]["city"]+" "+params[i]["shipping"]["state"]+" "+
+        params[i]["shipping"]["country"]+ "\n"
+        container +="Customer Note" + params[i]["customer_note"] + "\n"
+        container +="Items: \n" // Discount
+        c = params[i]["line_items"].length;
+        var items = "";
+        var total_line_items_quantity = 0;
+        for (var k = 0; k < c; k++) {
+          var item, item_f, qty
+            item = params[i]["line_items"][k]["name"];
+            qty = params[i]["line_items"][k]["quantity"];
+            item_f = "  " + qty + " x " + item;
+            items = items + item_f + ",\n";
+            total_line_items_quantity += qty;
+        }
+        container +=items
+        container +="Quantity: " + total_line_items_quantity + "\n"; // Quantity
+        container +="Price: " + params[i]["total"] + "\n"; //Price
+        container +="Discount: " + params[i]["discount_total"] + "\n"; // Discount
+        d = params[i]["refunds"].length;
+        var refundItems = "";
+        var refundValue = 0.0;
+        for (var r = 0; r < d; r++) {
+          var item, item_f, value;
+            item = params[i]["refunds"][r]["reason"];
+            value = params[i]["refunds"][r]["total"];
+            refundValue += parseFloat(value);
+            item_f = "  " +value +" - "+ item;
+            refundItems += item_f + ",\n";
+        }
+                  if( d > 0) {
+                  container +="Refunded value from order: " + refundValue + "\n" //Refunded value from order
+                  container +="Refunded items: " +refundItems + "\n" //Refunded items from order
+                  }
+                  container +="Order id: " + params[i]["id"] + "\n"
+                  container +="Date Created: " + params[i]["date_created"] + "\n"
+                  container +="Date Modified: " + params[i]["date_modified"] + "\n"
+                  container +="Status: " + params[i]["status"] + "\n"
+                  container +="order_key: " + params[i]["order_key"] + "\n"
+        } //end for
+        })
+          return container
+}
